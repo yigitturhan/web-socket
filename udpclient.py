@@ -1,38 +1,25 @@
 import socket
-
-host = ""  # empty
-port = 12345  # The port specified in server
-model_count = 0
-def get_large_objects(host, port):
-    global model_count
+dest = ("", 12345)
+type = 'utf-8'
+def get_objects(dest):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind((host, port))
-        print(f"Server listening on {host}:{port}")
-        conn, addr = s.accept()
-        print(f"Connection established from {addr}")
-        with open("received_model_"+str(model_count)+".obj", "wb") as f:
-            while True:
-                chunk = conn.recv(1024)
-                if not chunk:
-                    break
-                f.write(chunk)
-        model_count += 1
-    print("File received successfully.")
-    conn.close()
-
-def get_small_objects(host, port):
-    global model_count
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.bind((host, port))
-        print(f"Server listening on {host}:{port}")
-        conn, addr = s.accept()
-        print(f"Connection established from {addr}")
-        with open("received_model_"+str(model_count)+".obj", "wb") as f:
-            chunk = conn.recv(1024)
-            f.write(chunk)
-        model_count += 1
-    print("File received successfully.")
-    conn.close()
-
-get_large_objects(host, port)
-get_small_objects(host, port)
+        s.bind(dest)
+        print(f"Server listening on {dest}")
+        while True:
+            message, addr = s.recvfrom(1024)
+            message = message.decode(type)
+            if message == "END":
+                break
+            fileName, fileSize = message.split('_')
+            fileSize = int(fileSize)
+            receivedBytes = 0
+            s.sendto(b'NO_PROBLEM', addr)
+            with open(fileName, "wb") as f:
+                while receivedBytes < fileSize:
+                    chunk = s.recv(1024)
+                    receivedBytes += 1024
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            s.sendto(b'RECEIVED',addr)
+get_objects(dest)
