@@ -13,14 +13,12 @@ def get_objects(host, port):
         print(f"Server listening on {host}:{port}")
         conn, addr = s.accept()
         print(f"Connection established from {addr}")
-        
         message = conn.recv(1024)
         message = message.decode('utf-8')
         fileName, fileSize = message.split('_')
         fileSize = int(fileSize)
-        print(fileSize)
         receivedBytes = 0
-        conn.sendall(b'NO_PROBLEM')
+        conn.send(b'NO_PROBLEM')
         with open(fileName, "wb") as f:
             while receivedBytes < fileSize:  # !!!!
                 chunk = conn.recv(1024)
@@ -28,24 +26,22 @@ def get_objects(host, port):
                 if not chunk:
                     break
                 f.write(chunk)
-        print("burdayım")
+        conn.send(b'RECEIVED')
         message = conn.recv(1024)
         message = message.decode('utf-8')
         fileName, fileSize = message.split('_')
         fileSize = int(fileSize)
         receivedBytes = 0
-        conn.sendall(b'NO_PROBLEM')
-        print("gönderdim")
-        print(fileSize)
+        conn.send(b'NO_PROBLEM')
         with open(fileName, "wb") as f:
-            while receivedBytes < fileSize:  # !!!!
+            while fileSize > receivedBytes: # !!!!
                 chunk = conn.recv(1024)
                 receivedBytes += 1024
                 if not chunk:
                     break
                 f.write(chunk)
     print("File received successfully.")
+    conn.send(b'RECEIVED')
     conn.close()
-
 
 get_objects(host, port)
