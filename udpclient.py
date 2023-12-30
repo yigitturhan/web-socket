@@ -4,22 +4,29 @@ type = 'utf-8'
 def get_objects(dest):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(dest)
-        print(f"Server listening on {dest}")
         while True:
-            message, addr = s.recvfrom(1024)
-            message = message.decode(type)
-            if message == "END":
-                break
-            fileName, fileSize = message.split('_')
-            fileSize = int(fileSize)
-            receivedBytes = 0
-            s.sendto(b'NO_PROBLEM', addr)
-            with open(fileName, "wb") as f:
-                while receivedBytes < fileSize:
-                    chunk = s.recv(1024)
-                    receivedBytes += 1024
-                    if not chunk:
+            header_received, state = False, 0
+            while not header_received: #header ı alma loopu
+                message, addr = s.recvfrom(1024)
+                message = message.decode(type) #header endse tüm filelar gelmiş demek
+                if message == "END":
+                    s.sendto("OK".encode(type), addr) #işlem bitmişse ok gönder
+                    return
+                try:
+                    fileName, fileSize = message.split('_') #filename ve size çek
+                    fileSize, receivedBytes = int(fileSize), 0
+                    s.sendto("ACK_HEADER".encode(type), addr) #filename ve size ı çekebiliyosa ack header gönder
+                    header_received = True #looptan çık
+                except:
+                    pass
+            with open(fileName, "wb") as f: #dosyaya yazma
+                while receivedBytes < fileSize: #tüm paketleri bekle
+                    message = s.recv(1024) #mesaj al
+                    if not message:
                         break
-                    f.write(chunk)
-            s.sendto(b'RECEIVED',addr)
+                    f.write(message)
+                    s.sendto(("ACK_DATA_" + str(state)).encode(type), addr) #ack 0 ya da 1 gönder (state e göre)
+                    receivedBytes += 1024 #güncelle ki looptan çıksın
+                    state = 1 - state #state değiştirme
+
 get_objects(dest)

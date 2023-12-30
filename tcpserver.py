@@ -1,10 +1,10 @@
 # echo-server.py
 import socket
-# from . import util  # utils  mi util mi
+import time
 import os
 
-
 def send_object(pathLarge, pathSmall, host, port):
+    start = time.time()
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
@@ -34,9 +34,10 @@ def send_object(pathLarge, pathSmall, host, port):
                     s.sendall(chunk)
             s.recv(8)
             print("Objects Sent Successfully")
-
     except:
         print("ERROR OCCURED")
+    end = time.time()
+    print(end - start)
 
 
 host = "172.17.0.3"  # clients ip address
