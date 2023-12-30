@@ -7,9 +7,7 @@ import os
 def send_object(pathLarge, pathSmall, host, port):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-
             s.connect((host, port))
-
             with open(pathLarge, "rb") as f:
                 fileName = pathLarge[14:]
                 largeBytes = os.path.getsize(pathLarge)
@@ -17,7 +15,6 @@ def send_object(pathLarge, pathSmall, host, port):
                 s.sendall((fileName+"_"+largeBytes).encode('utf-8'))
                 message = s.recv(1024)  # karşıdan mesaj al
                 print(message)
-
                 while True:
                     chunk = f.read(1024)
                     if not chunk:
@@ -29,6 +26,8 @@ def send_object(pathLarge, pathSmall, host, port):
                 smallBytes = os.path.getsize(pathSmall)
                 smallBytes = str(smallBytes)
                 s.sendall((fileName+"_"+smallBytes).encode('utf-8'))
+                print("gönderdim")
+                print(fileName+"_"+smallBytes)
                 message = s.recv(1024)  # karşıdan mesaj al
                 while True:
                     chunk = f.read(1024)
