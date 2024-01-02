@@ -2,9 +2,11 @@ import socket
 dest = ("", 12345)
 type = 'utf-8'
 def get_objects(dest):
+    g = 0
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(dest)
         while True:
+            
             header_received, state = False, 0
             while not header_received: #header ı alma loopu
                 message, addr = s.recvfrom(1024)
@@ -21,10 +23,13 @@ def get_objects(dest):
                     pass
             with open(fileName, "wb") as f: #dosyaya yazma
                 while receivedBytes < fileSize: #tüm paketleri bekle
-                    message = s.recv(1024) #mesaj al
+                    message = s.recv(1025) #mesaj al
+                    if message[0] != state + 48:
+                        s.sendto(("ACK_DATA_" + str(state)).encode(type), addr)
+                        continue
                     if not message:
                         break
-                    f.write(message)
+                    f.write(message[1:])
                     s.sendto(("ACK_DATA_" + str(state)).encode(type), addr) #ack 0 ya da 1 gönder (state e göre)
                     receivedBytes += 1024 #güncelle ki looptan çıksın
                     state = 1 - state #state değiştirme

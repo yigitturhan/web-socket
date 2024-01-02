@@ -9,8 +9,7 @@ def send_object(pathlist, host, port):
         s.settimeout(1) #1 saniye geçerse excepte girmesini sağlıyo
         s.connect(dest)
         for ind in range(len(pathlist)):
-            state  = 0 
-            header_sent, current_packet, current_packet_sent= False, 0, False
+            header_sent, current_packet, current_packet_sent, state = False, 0, False, 0
             data = read_data(pathlist[ind])
             header = create_header(pathlist[ind])
             packet_count = len(data)
@@ -18,14 +17,14 @@ def send_object(pathlist, host, port):
                 s.sendto(header, dest)
                 try:
                     message = s.recv(10).decode(type)
-                    print(message)
                     if message == "ACK_HEADER": #ack header gelirse looptan çıkıyo
                         header_sent = True
                 except:
                     pass
             while True: #tüm paketleri göndermek için loop
+               
                 while not current_packet_sent:  #şuanki paketi onaylamak için loop
-                    s.sendto(data[current_packet], dest) #paketi gönder
+                    s.sendto(str(state).encode(type) + data[current_packet], dest) #paketi gönder
                     try:
                         message = s.recv(10).decode(type)
                         print(message)
@@ -71,3 +70,4 @@ def read_data(path):
 paths = ["/root/objects/large-0.obj","/root/objects/large-1.obj","/root/objects/large-2.obj",
 "/root/objects/small-0.obj","/root/objects/small-1.obj","/root/objects/small-2.obj"]
 send_object(paths, host, port)
+
