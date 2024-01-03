@@ -40,7 +40,7 @@ def send_object(pathLarge, pathSmall, host, port):
     print(end - start)
 
 
-host = "172.17.0.3"  # clients ip address
+host = "172.17.0.2"  # clients ip address
 port = 12345  # The port used by the server
 path_of_large_object = "/root/objects/large-0.obj"
 path_of_small_object = "/root/objects/small-0.obj"
