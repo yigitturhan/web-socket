@@ -1,47 +1,47 @@
-# echo-server.py
 import socket
-import time
 import os
+import time
 
 def send_object(pathLarge, pathSmall, host, port):
     start = time.time()
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
-            with open(pathLarge, "rb") as f:
-                fileName = pathLarge[14:]
-                largeBytes = os.path.getsize(pathLarge)
-                largeBytes = str(largeBytes)
-                s.send((fileName+"_"+largeBytes).encode('utf-8'))
-                message = s.recv(10)  # karşıdan mesaj al
-                while True:
-                    chunk = f.read(1024)
-                    if not chunk:
-                        break
-                    s.sendall(chunk)
-            s.recv(8)
-            with open(pathSmall, "rb") as f:
-                fileName = pathSmall[14:]
-                smallBytes = os.path.getsize(pathSmall)
-                smallBytes = str(smallBytes)
-                s.send((fileName+"_"+smallBytes).encode('utf-8'))
-                print(fileName+"_"+smallBytes)
-                message = s.recv(10)  # karşıdan mesaj al
-                while True:
-                    chunk = f.read(1024)
-                    if not chunk:
-                        break
-                    s.sendall(chunk)
-            s.recv(8)
+            
+            # Sending large file
+            send_file(s, pathLarge)
+            
+            # Sending small file
+            send_file(s, pathSmall)
+            
             print("Objects Sent Successfully")
-    except:
-        print("ERROR OCCURED")
+            
+    except Exception as e:
+        print(f"ERROR OCCURRED: {e}")
+    
     end = time.time()
-    print(end - start)
+    print("Time taken:", end - start)
 
-
-host = "172.17.0.2"  # clients ip address
-port = 12345  # The port used by the server
-path_of_large_object = "/root/objects/large-0.obj"
-path_of_small_object = "/root/objects/small-0.obj"
-send_object(path_of_large_object, path_of_small_object, host, port)
+def send_file(s, filePath):
+    with open(filePath, "rb") as f:
+        fileName = filePath[14:]
+        fileSize = os.path.getsize(filePath)
+        s.send((f"{fileName}_{fileSize}").encode('utf-8'))
+        message = s.recv(10)  # receive acknowledgment
+        flag = False
+        current_chunk = 0
+        while True:
+            try:
+                if not flag:
+                    chunk = f.read(1024)
+                if not chunk:
+                    break
+                s.sendall(chunk)
+                flag = False
+            except Exception as e:
+                print(f"Error sending chunk: {e}. Retrying with the next chunk...")
+                flag = True
+                continue
+            
+        s.recv(8)  # receive final acknowledgment
+send_object("root/objects/large-0.obj", "root/objects/small-0.obj", "172.17.0.2", 12345)
