@@ -1,57 +1,60 @@
-# echo-client.py
-
+# echo-client.
 import socket
 import time
-host = ""  # empty
-port = 12345  # The port specified in server
-a = 0
-
+host, port,a = "", 12345, 0
 def get_objects(host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         global a
-        s.bind((host, port))
+        s.bind((host,port))
         s.listen()
-        print(f"Server listening on {host}:{port}")
         conn, addr = s.accept()
         a = time.time()
-        print(f"Connection established from {addr}")
-        message = conn.recv(1024)
+        message = conn.recv(20)
         message = message.decode('utf-8')
-        fileName, fileSize = message.split('_')
-        fileSize = int(fileSize)
-        receivedBytes = 0
-        conn.send(b'NO_PROBLEM')
-        flag = True
+        print(message)
+        fileName, fileSize = message.split("_")
+        fileSize, received_bytes = int(fileSize), 0
+        conn.send(b"NO_PROBLEM")
+        flag, last_byte = True, 0
         with open(fileName, "wb") as f:
-            while receivedBytes < fileSize:  # !!!!
+            while received_bytes < fileSize:
                 chunk = conn.recv(1024)
-                if chunk == b"done":
+                last_byte = chunk[-5:]
+                if last_byte == b"bitti":
                     flag = False
                     break
-                receivedBytes += 1024
-                if not chunk:
-                    break
+                received_bytes += len(chunk)
                 f.write(chunk)
-        if flag:
-            message = conn.recv(20)
+        print("çiktim")
+        if flag and last_byte != b"bitti":
+            message = conn.recv(5)
             print(message)
-        conn.send(b'RECEIVED')
-        message = conn.recv(1024)
+        print("file received")
+        conn.send(b"RECEIVED")
+         message = conn.recv(20)
         message = message.decode('utf-8')
-        fileName, fileSize = message.split('_')
-        fileSize = int(fileSize)
-        receivedBytes = 0
-        conn.send(b'NO_PROBLEM')
+        print(message)
+        fileName, fileSize = message.split("_")
+        fileSize, received_bytes = int(fileSize), 0
+        conn.send(b"NO_PROBLEM")
+        flag, last_byte = True, 0
         with open(fileName, "wb") as f:
-            while fileSize > receivedBytes: # !!!!
+            while received_bytes < fileSize:
                 chunk = conn.recv(1024)
-                receivedBytes += 1024
-                if not chunk:
+                last_byte = chunk[-5:]
+                if last_byte == b"bitti":
+                    flag = False
                     break
+                received_bytes += len(chunk)
                 f.write(chunk)
-    print("File received successfully.")
-    conn.send(b'RECEIVED')
-    conn.close()
+        print("çiktim")
+        if flag and last_byte != b"bitti":
+            message = conn.recv(5)
+            print(message)
+        print("file received")
+        conn.send(b"RECEIVED")
 
 get_objects(host, port)
 print(time.time()-a)
+
+

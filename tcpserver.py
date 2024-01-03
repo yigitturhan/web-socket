@@ -1,42 +1,28 @@
-import socket
 import os
+import socket
 import time
 
-def send_object(pathLarge, pathSmall, host, port):
+def send_object(path_list host, port):
     start = time.time()
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((host, port))
-            
-            # Sending large file
-            send_file(s, pathLarge)
-            s.send(b"done")
-            message = s.recv(20)
-            print(message)
-            
-            # Sending small file
-            send_file(s, pathSmall)
-            message = s.recv(20)
-            print(message)
-
-            
-            print("Objects Sent Successfully")
-            
+            s.connect((host,port))
+            for path in path_list:
+                send_file(s, path)
+            print("sent")
     except Exception as e:
-        print(f"ERROR OCCURRED: {e}")
-    
+        print(e)
     end = time.time()
-    print("Time taken:", end - start)
+    print(end-start)
 
 def send_file(s, filePath):
     with open(filePath, "rb") as f:
         fileName = filePath[14:]
         fileSize = os.path.getsize(filePath)
-        s.send((f"{fileName}_{fileSize}").encode('utf-8'))
-        message = s.recv(10)  # receive acknowledgment
+        s.send((fileName+"_"+str(fileSize)).encode('utf-8'))
+        message = s.recv(10)
         print(message)
         flag = False
-        current_chunk = 0
         while True:
             try:
                 if not flag:
@@ -46,9 +32,14 @@ def send_file(s, filePath):
                 s.sendall(chunk)
                 flag = False
             except Exception as e:
-                print(f"Error sending chunk: {e}. Retrying with the next chunk...")
+                print(e)
                 flag = True
                 continue
-            
-        s.recv(8)  # receive final acknowledgment
-send_object("/root/objects/large-0.obj", "/root/objects/small-0.obj", "172.17.0.2", 12345)
+        s.send(b"bitti")
+        message = s.recv(8)
+        print(message)
+
+host = "172.17.0.2"
+port = 12345
+send_object(["/root/objects/large-0.obj", "/root/objects/small-0.obj", "/root/objects/large-1.obj", "/root/objects/small-1.obj", 
+"/root/objects/large-2.obj", "/root/objects/small-2.obj"], host, port)
