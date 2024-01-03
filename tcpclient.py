@@ -21,13 +21,20 @@ def get_objects(host, port):
         fileSize = int(fileSize)
         receivedBytes = 0
         conn.send(b'NO_PROBLEM')
+        flag = True
         with open(fileName, "wb") as f:
             while receivedBytes < fileSize:  # !!!!
                 chunk = conn.recv(1024)
+                if chunk == b"done":
+                    flag = False
+                    break
                 receivedBytes += 1024
                 if not chunk:
                     break
                 f.write(chunk)
+        if flag:
+            message = conn.recv(20)
+            print(message)
         conn.send(b'RECEIVED')
         message = conn.recv(1024)
         message = message.decode('utf-8')

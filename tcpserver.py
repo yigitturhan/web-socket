@@ -10,9 +10,15 @@ def send_object(pathLarge, pathSmall, host, port):
             
             # Sending large file
             send_file(s, pathLarge)
+            s.send(b"done")
+            message = s.recv(20)
+            print(message)
             
             # Sending small file
             send_file(s, pathSmall)
+            message = s.recv(20)
+            print(message)
+
             
             print("Objects Sent Successfully")
             
@@ -28,6 +34,7 @@ def send_file(s, filePath):
         fileSize = os.path.getsize(filePath)
         s.send((f"{fileName}_{fileSize}").encode('utf-8'))
         message = s.recv(10)  # receive acknowledgment
+        print(message)
         flag = False
         current_chunk = 0
         while True:
@@ -44,4 +51,4 @@ def send_file(s, filePath):
                 continue
             
         s.recv(8)  # receive final acknowledgment
-send_object("root/objects/large-0.obj", "root/objects/small-0.obj", "172.17.0.2", 12345)
+send_object("/root/objects/large-0.obj", "/root/objects/small-0.obj", "172.17.0.2", 12345)
