@@ -37,21 +37,18 @@ def send_object(pathlist, host, port):
                     break   
             except:
                 pass
-
         while index_list: #tüm paketleri göndermek için loop
             try:
-                packets_to_send, indexes_of_packets, file_names_as_bytes, hashes, hashed_packets, i2 = [], [], [], [], [], 0
-                for x,y in index_list[:5]:
-                    packets_to_send.append(data_list[x][y])
-                    indexes_of_packets.append(str(y).encode(type))
+                #packets_to_send, indexes_of_packets, file_names_as_bytes, hashes, hashed_packets, i2 = [], [], [], [], [], 0
+                for x,y in index_list:
+                    packets_to_send = data_list[x][y]
+                    indexes_of_packets = str(y).encode(type)
                     file_name_2 = pathlist[x][14:]
-                    file_names_as_bytes.append(file_name_2.encode(type))
-                    hashes.append(compute_sha256((file_name_2 + "|" + str(y)).encode(type) + encoded_pipe + data_list[x][y]))
-                    hashed_packets.append(hashes[i2]+file_names_as_bytes[i2]+encoded_pipe+indexes_of_packets[i2]+encoded_pipe+packets_to_send[i2])
-                    i2 += 1
-                for packet in hashed_packets:
-                    s.sendto(packet, dest)
-                for i in range(len(packets_to_send)):
+                    file_names_as_bytes = file_name_2.encode(type)
+                    hashes = compute_sha256((file_name_2 + "|" + str(y)).encode(type) + encoded_pipe + data_list[x][y])
+                    hashed_packets = hashes+file_names_as_bytes+encoded_pipe+indexes_of_packets+encoded_pipe+packets_to_send
+                    s.sendto(hashed_packets, dest)
+                for i in range(len(index_list)):
                     message = s.recv(1024)
                     hash = message[:64]
                     ok, rec_filename, rec_index = message[64:].decode(type).split("_") #hash ok_filename_index
@@ -110,4 +107,5 @@ paths = ["/root/objects/large-0.obj","/root/objects/large-1.obj","/root/objects/
 a = time.time()
 send_object(paths, host, port)
 print(time.time()-a)
+
 
