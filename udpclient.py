@@ -3,9 +3,8 @@ import hashlib
 import time
 dest = ("", 12345)
 type = 'utf-8'
-a = 0
 def get_objects(dest):
-    global a
+    start = time.time()
     encoded_ok = "OK".encode(type)
     encoded_end_header = "END_HEADER".encode(type)
     encoded_nack_header = "NACKHEADER".encode(type)
@@ -55,6 +54,8 @@ def get_objects(dest):
                 hash_of_ack = compute_sha256(ack_data)
                 s.sendto(hash_of_ack+ack_data, addr)
         write_files(file_names, files)
+    end = time.time()
+    return end - start
 
 
         
@@ -79,5 +80,4 @@ def check_continue(lst):
     return False
 
 
-get_objects(dest)
-print(time.time()-a)
+print(get_objects(dest))

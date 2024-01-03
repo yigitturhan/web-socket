@@ -5,6 +5,7 @@ import time
 type = 'utf-8'
 host, port = "172.17.0.2" , 12345 # clients ip address and the port
 def send_object(pathlist, host, port):
+    start = time.time()
     encoded_pipe = "|".encode(type)
     encoded_ack_header = "ACK_HEADER".encode(type)
     encoded_end_header = "END_HEADER".encode(type)
@@ -67,6 +68,8 @@ def send_object(pathlist, host, port):
                     print("All files are sent and the connection is closed.")
             except Exception as e:
                 print(e)
+    end = time.time()
+    return end - start
 
 
 def create_header(path):
@@ -103,9 +106,12 @@ def get_index_list(data_list):
     return res
 
 paths = ["/root/objects/large-0.obj","/root/objects/large-1.obj","/root/objects/large-2.obj",
-"/root/objects/small-0.obj","/root/objects/small-1.obj","/root/objects/small-2.obj"]
-a = time.time()
-send_object(paths, host, port)
-print(time.time()-a)
+"/root/objects/large-3.obj","/root/objects/large-4.obj","/root/objects/large-5.obj",
+"/root/objects/large-6.obj","/root/objects/large-7.obj","/root/objects/large-8.obj",
+"/root/objects/large-9.obj","/root/objects/small-0.obj","/root/objects/small-1.obj",
+"/root/objects/small-2.obj","/root/objects/small-3.obj","/root/objects/small-4.obj",
+"/root/objects/small-5.obj","/root/objects/small-6.obj","/root/objects/small-7.obj",
+"/root/objects/small-8.obj","/root/objects/small-9.obj"]
+print(send_object(paths, host, port))
 
 
