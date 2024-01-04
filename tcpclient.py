@@ -1,7 +1,7 @@
 # echo-client.
 import socket
 import time
-host, port,type = "", 12345, "utf-8"
+host, port,tp = "", 12345, "utf-8"
 def get_objects(dest):
     start = time.time()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -9,8 +9,7 @@ def get_objects(dest):
         s.listen()
         conn, addr = s.accept()
         while True:
-            message = conn.recv(20).decode
-            message = message.decode(type)
+            message = conn.recv(20).decode(tp)
             if message == "END":
                 break
             fileName, fileSize = message.split("_")
@@ -25,7 +24,7 @@ def get_objects(dest):
             print(fileName, " received.")
     end = time.time()
     return end - start
-        
+
 dest = (host, port)
 print(get_objects(dest))
 
