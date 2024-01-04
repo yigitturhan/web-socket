@@ -9,11 +9,14 @@ def send_object(pathlist, host, port):
     encoded_pipe = "|".encode(type)
     encoded_ack_header = "ACK_HEADER".encode(type)
     encoded_end_header = "END_HEADER".encode(type)
+    encoded_end_header_hash = compute_sha256(encoded_end_header)
     encoded_end = "END".encode(type)
     encoded_ok = "OK".encode(type)
+    encoded_end_hash = compute_sha256(encoded_end)
+    encoded_ok_hash = compute_sha256(encoded_ok)
     dest, end_sent = (host, port), False
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-        s.settimeout(1) #1 saniye geçerse excepte girmesini sağlıyo
+        s.settimeout(0.5) #1 saniye geçerse excepte girmesini sa�~_lıyo
         s.connect(dest)
         print("Connection established with "+host+" at the port number "+str(port))
         data_list = read_data(pathlist)
@@ -23,19 +26,24 @@ def send_object(pathlist, host, port):
             hash_of_header = compute_sha256(header)
             while True: #header gönderilene kadar deniyo
                 s.sendto(hash_of_header+header, dest)
+                print("gönderdim"))
                 try:
-                    message = s.recv(64)
-                    if message == encoded_ack_header:
+                    message = s.recv(128) #hashli gelsin
+                    print(message)
+                    hash_sha = message[:64]
+                    if compute_sha256(message[64:]) == hash_sha and message[64:] == encoded_ack_header:
                         break
                 except Exception as e:
                     print(e)
-        
+        print("ciktim")
+
         while True:
-            s.sendto(encoded_end_header, dest)
+            s.sendto(encoded_end_header_hash + encoded_end_header, dest)
             try:
-                message = s.recv(8)
-                if message == encoded_ok:
-                    break   
+                message = s.recv(128) #hashli gelsin
+                hash_mes = message[:64]
+                if hash_mes == encoded_ok_hash and message[64:] == encoded_ok:
+                    break
             except:
                 pass
         while index_list: #tüm paketleri göndermek için loop
@@ -45,9 +53,10 @@ def send_object(pathlist, host, port):
                     packets_to_send = data_list[x][y]
                     indexes_of_packets = str(y).encode(type)
                     file_name_2 = pathlist[x][14:]
-                    file_names_as_bytes = file_name_2.encode(type)
+                    file_names_as_bytes = file_name_2.encode(type)                    
                     hashes = compute_sha256((file_name_2 + "|" + str(y)).encode(type) + encoded_pipe + data_list[x][y])
                     hashed_packets = hashes+file_names_as_bytes+encoded_pipe+indexes_of_packets+encoded_pipe+packets_to_send
+                    print(indexes_of_packets)
                     s.sendto(hashed_packets, dest)
                 for i in range(len(index_list)):
                     message = s.recv(1024)
@@ -55,16 +64,22 @@ def send_object(pathlist, host, port):
                     ok, rec_filename, rec_index = message[64:].decode(type).split("_") #hash ok_filename_index
                     rec_index = int(rec_index)
                     if ok == "OK" and hash == compute_sha256(("OK_"+ rec_filename+"_"+str(rec_index)).encode(type)):
-                        index_list.remove((get_index_of_file(pathlist,rec_filename),rec_index))
-            
+                        try:
+                            index_list.remove((get_index_of_file(pathlist,rec_filename),rec_index))                        except:
+                            pass
+
             except Exception as e:
                 print(e)
         while not end_sent: #tüm dosyalar gitti mi kontrolü
-            s.sendto(encoded_end, dest)
+            s.sendto(encoded_end_hash + encoded_end, dest)
+            print("bura1")
             try:
-                message = s.recv(1024) #karşıya end gönder ok bekle
-                if message:
+                message = s.recv(1024) #kar�~_ıya end gönder ok b
+                print(message)
+                hash_mes = message[:64]
+                if hash_mes == encoded_ok_hash:
                     end_sent = True
+                    s.sendto(encoded_end_hash + encoded_end,dest)
                     print("All files are sent and the connection is closed.")
             except Exception as e:
                 print(e)
@@ -76,7 +91,6 @@ def create_header(path):
     filename = path[14:]
     bytecount = os.path.getsize(path)
     return (filename + "_" + str(bytecount)).encode(type)
-
 def get_index_of_file(pathlist, file_name):
     for path in pathlist:
         if path[14:] == file_name:
@@ -113,5 +127,9 @@ paths = ["/root/objects/large-0.obj","/root/objects/large-1.obj","/root/objects/
 "/root/objects/small-5.obj","/root/objects/small-6.obj","/root/objects/small-7.obj",
 "/root/objects/small-8.obj","/root/objects/small-9.obj"]
 print(send_object(paths, host, port))
+
+
+
+
 
 
