@@ -19,14 +19,14 @@ def send_object(pathlist, host, port):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.connect(dest)
         rtt_sum, rtt_count = 0, 0 #two value one for summation of example rtts the other is for while loop
-        while rtt_count < 2: #get two rtt value
+        while rtt_count < 4: #get two rtt value
             rtt = calculate_rtt(s,dest,encoded_ok,encoded_pipe)
             if rtt != 0: #if the function above returns 0, that means an error occured like timeout. just ignore it. If not 0 make the calculations
                 rtt_sum += rtt
                 rtt_count +=1
-        rtt = rtt_sum / 2 #average of the gathered rtt information
-        if rtt < 0.01: #if the rtt is below 0.01 set it to 0.01. This value is gathered during experiments. Making timeout below that value does not make significant change
-            rtt = 0.01
+        rtt = rtt_sum / 4 #average of the gathered rtt information
+        if rtt < 0.011: #if the rtt is below 0.01 set it to 0.01. This value is gathered during experiments. Making timeout below that value does not make significant change
+            rtt = 0.011
         s.settimeout(rtt) #1 saniye geçerse excepte girmesini sa�~_lıyo
         data_list = read_data(pathlist) # the list for all data of 20 files
         index_list = get_index_list(data_list) #the list to store indexes. please look at note 6 on information about code part at report
@@ -39,7 +39,7 @@ def send_object(pathlist, host, port):
                     break
             except:
                 pass
-        for _ in range(5) #this loop is for safety. in a packet loss situation without this loop there might be some stuck at code
+        for _ in range(5): #this loop is for safety. in a packet loss situation without this loop there might be some stuck at code
             s.sendto(encoded_end_header_hash + encoded_end_header, dest) #sending encoded end header is for telling the client that header part is finished
             try:
                 message = s.recv(128) #hashli gelsin
@@ -71,7 +71,7 @@ def send_object(pathlist, host, port):
                             pass
             except:
                 pass
-        for _ in range(5) #send a signal for receiver to let it know everything is sent. this loop is here because of the same reason with the loop at line 42
+        for _ in range(5): #send a signal for receiver to let it know everything is sent. this loop is here because of the same reason with the loop at line 42
             s.sendto(encoded_end_hash + encoded_end, dest) #send encoded end hash. receiver will extract it and understand files are received
             try:
                 message = s.recv(1024) #waiting for an ok message from receiver
