@@ -19,17 +19,29 @@ def get_objects(dest):
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(dest)
         file_names, files = [], []
+        rtt_send, counter = False, 0
+        s.settimeout(0.3)
+        for _ in range(15):
+            try:
+                message, addr = s.recvfrom(1024)
+                print(message)
+                s.sendto(encoded_ok,addr)
+            except:
+                pass
+        s.settimeout(None)
         while True:
             message, addr = s.recvfrom(1024)
+            if len(message) < 64:
+                s.sendto(encoded_ok, addr)
+                continue
             hash = message[:64]
             message = message[64:]
             print("Connection established from ", addr[0])
             if hash == encoded_end_header_hash:
-                print("ciktim")
                 s.sendto(encoded_ok_hash+encoded_ok, addr) #i�~_lem bitmi�~_se ok gönder
                 break
             try:
-                data = message.decode(type) #header endse tüm filelar gelmi�~_ deme
+                data = message.decode(type) #header endse tüm filelar gelmi�~_ d
                 if compute_sha256(message) != hash:
                     s.sendto(encoded_nack_header_hash+encoded_nack_header, addr)
                     continue
@@ -46,26 +58,22 @@ def get_objects(dest):
             hash = message[:64]
             if hash == encoded_end_hash:
                 s.sendto(encoded_ok_hash+encoded_ok, addr)
-                print("All files are received")
                 break
             try:
                 a,b,c = message[64:].decode(type).split("|")
             except:
                 continue
             file_name, index, data = message[64:].decode(type).split("|")
-            print(index)
             data, index = data.encode(type), int(index)
+            #print(compute_sha256(file_name.encode(type)+encoded_pipe+str(index).encode(type)+encoded_pipe+data) == hash, "buraa")
             if compute_sha256(file_name.encode(type)+encoded_pipe+str(index).encode(type)+encoded_pipe+data) == hash:
                 files[file_names.index(file_name)][index] = data
                 ack_data = ("OK_"+file_name+"_"+str(index)).encode(type)
                 hash_of_ack = compute_sha256(ack_data)
                 s.sendto(hash_of_ack+ack_data, addr)
-        print("ciktim ben")
         write_files(file_names, files)
     end = time.time()
     return end - start
-
-
 
 def compute_sha256(data):
     return hashlib.sha256(data).hexdigest().encode(type)
@@ -89,5 +97,23 @@ def check_continue(lst):
 
 
 print(get_objects(dest))
-              
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
