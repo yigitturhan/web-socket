@@ -10,6 +10,7 @@ def send_object(pathlist, host, port):
     encoded_ack_header = "ACK_HEADER".encode(type)
     encoded_end_header = "END_HEADER".encode(type)
     encoded_end_header_hash = compute_sha256(encoded_end_header)
+    encoded_ack_header_hash = compute_sha256(encoded_ack_header)
     encoded_end = "END".encode(type)
     encoded_ok = "OK".encode(type)
     encoded_end_hash = compute_sha256(encoded_end)
@@ -19,32 +20,28 @@ def send_object(pathlist, host, port):
         rtt_sum, rtt_count = 0, 0
         while rtt_count < 10:
             rtt = calculate_rtt(s,dest,encoded_ok,encoded_pipe)
-            print(rtt)
             if rtt != 0:
                 rtt_sum += rtt
                 rtt_count +=1
         rtt = rtt_sum / rtt_count
-        if rtt < 0.01:
-            rtt = 0.01
-        s.settimeout(rtt) #1 saniye geçerse excepte girmesini sa�~_lıyo
+        if rtt < 0.001:
+            rtt = 0.001
+        s.settimeout(0.3) #1 saniye geçerse excepte girmesini sa�~_lıyo
         s.connect(dest)
         data_list = read_data(pathlist)
         index_list = get_index_list(data_list)
-        for ind in range(len(pathlist)):
-            header = create_header(pathlist[ind])
-            hash_of_header = compute_sha256(header)
-            while True: #header gönderilene kadar deniyo
-                s.sendto(hash_of_header+header, dest)
-                try:
-                    message = s.recv(128) #hashli gelsin
-                    hash_sha = message[:64]
-                    if compute_sha256(message[64:]) == hash_sha and message[64:] == encoded_ack_header:
-                        break
-                except Exception as e:
-                    print(e)
-        counter = 0
-        while counter < 20:
-            counter += 1
+        header_to_sent = create_one_header_with_hash(pathlist, encoded_pipe)
+        while True:
+            s.sendto(header_to_sent, dest)
+            try:
+                message = s.recv(1024)
+                print(encoded_ack_header_hash + encoded_ack_header)
+                if message == encoded_ack_header_hash + encoded_ack_header:
+                    break
+            except:
+                pass
+        s.settimeout(rtt)
+        for _ in range(20)
             s.sendto(encoded_end_header_hash + encoded_end_header, dest)
             try:
                 message = s.recv(128) #hashli gelsin
@@ -77,16 +74,14 @@ def send_object(pathlist, host, port):
 
             except Exception as e:
                 print(e)
-        counter = 0
-        while not end_sent and counter < 15: #tüm dosyalar gitti mi kontrol
-            counter += 1
+        for _ in range(15) #tüm dosyalar gitti mi kontrol
             s.sendto(encoded_end_hash + encoded_end, dest)
             try:
                 message = s.recv(1024) #kar�~_ıya end gönder ok b
                 hash_mes = message[:64]
                 if hash_mes == encoded_ok_hash:
-                    end_sent = True
                     s.sendto(encoded_end_hash + encoded_end,dest)
+                    break
             except Exception as e:
                 print(e)
     end = time.time()
@@ -96,11 +91,23 @@ def create_header(path):
     filename = path[14:]
     bytecount = os.path.getsize(path)
     return (filename + "_" + str(bytecount)).encode(type)
+
 def get_index_of_file(pathlist, file_name):
     for path in pathlist:
         if path[14:] == file_name:
             return pathlist.index(path)
     raise Exception
+
+def create_one_header_with_hash(pathlist, encoded_pipe):
+    paths = bytearray()
+    for index, path in enumerate(pathlist):
+        paths.extend(create_header(path))
+        if index != len(pathlist) -1:
+            paths.extend(encoded_pipe)
+    result = bytes(paths)
+    hash = compute_sha256(result)
+    return hash+result
+
 
 
 def read_data(pathlist):
@@ -115,6 +122,7 @@ def read_data(pathlist):
                 temp.append(chunk)
             data.append(temp)
     return data
+
 def compute_sha256(data):
     return hashlib.sha256(data).hexdigest().encode(type)
 
@@ -123,7 +131,6 @@ def get_index_list(data_list):
     res = [(i,j) for i in range(len(data_list)) for j in range(len(data_list[i]))]
     return res
 def calculate_rtt(s, dest, encoded_ok, encoded_pipe):
-    counter = 0
     s.settimeout(0.3)
     a, b = 0, 0
     s.sendto(encoded_pipe,dest)
@@ -133,8 +140,8 @@ def calculate_rtt(s, dest, encoded_ok, encoded_pipe):
         b = time.time()
         return b-a
     except:
-        pass
-    return 0
+        return 0
+
 paths= ["/root/objects/large-0.obj","/root/objects/large-1.obj","/root/objects/large-2.obj",
 "/root/objects/large-3.obj","/root/objects/large-4.obj","/root/objects/large-5.obj",
 "/root/objects/large-6.obj","/root/objects/large-7.obj","/root/objects/large-8.obj",

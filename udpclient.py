@@ -24,38 +24,46 @@ def get_objects(dest):
         for _ in range(15):
             try:
                 message, addr = s.recvfrom(1024)
-                print(message)
                 s.sendto(encoded_ok,addr)
             except:
                 pass
         s.settimeout(None)
         while True:
             message, addr = s.recvfrom(1024)
-            if len(message) < 64:
-                s.sendto(encoded_ok, addr)
-                continue
             hash = message[:64]
             message = message[64:]
-            print("Connection established from ", addr[0])
             if hash == encoded_end_header_hash:
-                s.sendto(encoded_ok_hash+encoded_ok, addr) #i�~_lem bitmi�~_se ok gönder
+                s.sendto(encoded_ack_header_hash+encoded_ack_header, addr) #i�~_lem bitmi�~_se ok gönder
                 break
+            if len(message) +len(hash) < 64:
+                s.sendto(encoded_ok, addr)
+                continue
             try:
-                data = message.decode(type) #header endse tüm filelar gelmi�~_ d
                 if compute_sha256(message) != hash:
                     s.sendto(encoded_nack_header_hash+encoded_nack_header, addr)
                     continue
-                fileName, fileSize = data.split('_') #filename ve size çek
-                fileSize = int(fileSize)
-                if fileName not in file_names:
-                    file_names.append(fileName)
-                    files.append([False]*ceil(fileSize,1024))
+                if len(file_names) != 0:
+                    s.sendto(encoded_ack_header_hash+encoded_ack_header, addr) #filename ve size ı çekebiliyosa ack header gönder
+                    continue
+                data = message.decode(type) #header endse tüm filelar gelmi�~_ d
+                headers = data.split("|")
+                print(headers)
+                for header in headers:
+                    fileName, fileSize = header.split('_') #filename ve size çek
+                    fileSize = int(fileSize)
+                    if fileName not in file_names:
+                        file_names.append(fileName)
+                        files.append([False]*ceil(fileSize,1024))
                 s.sendto(encoded_ack_header_hash+encoded_ack_header, addr) #filename ve size ı çekebiliyosa ack header gönder
             except:
                 s.sendto(encoded_ok_hash+encoded_ok, addr)
+
         while True: #tüm paketleri bekle
             message = s.recv(1250) #mesaj al
             hash = message[:64]
+            if hash == encoded_end_header_hash:
+                s.sendto(encoded_ack_header_hash+encoded_ack_header, addr) #i�~_lem bitmi�~_se ok gönder
+                continue
             if hash == encoded_end_hash:
                 s.sendto(encoded_ok_hash+encoded_ok, addr)
                 break
@@ -65,7 +73,6 @@ def get_objects(dest):
                 continue
             file_name, index, data = message[64:].decode(type).split("|")
             data, index = data.encode(type), int(index)
-            #print(compute_sha256(file_name.encode(type)+encoded_pipe+str(index).encode(type)+encoded_pipe+data) == hash, "buraa")
             if compute_sha256(file_name.encode(type)+encoded_pipe+str(index).encode(type)+encoded_pipe+data) == hash:
                 files[file_names.index(file_name)][index] = data
                 ack_data = ("OK_"+file_name+"_"+str(index)).encode(type)
@@ -89,31 +96,6 @@ def write_files(file_names, file_data):
             for data in file_data[i]:
                 f.write(data)
 
-def check_continue(lst):
-    for el in lst:
-        if False in l:
-            return True
-    return False
 
 
 print(get_objects(dest))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
