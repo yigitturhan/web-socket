@@ -1,5 +1,6 @@
 import socket
 import time
+import os
 type = "utf-8"
 def send_object(path_list, dest):
     start = time.time()
