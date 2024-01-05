@@ -21,7 +21,7 @@ def get_objects(dest):
         file_names, files = [], [] #two lists. one stores file names the other stores related data
         rtt_send, counter = False, 0 #values to calculate rtt at the sender side
         s.settimeout(0.3) #default timeout for rtt calculation
-        for _ in range(8): #this tries 15 times to get just a pipe symbol. used for rtt calculation Please check note 1 in the information about code part at report
+        for _ in range(8): #this tries 8 times to get just a pipe symbol. used for rtt calculation Please check note 1 in the information about code part at report
             try:
                 message, addr = s.recvfrom(1024)
                 s.sendto(encoded_ok,addr)

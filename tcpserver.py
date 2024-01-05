@@ -8,30 +8,31 @@ def send_object(path_list, dest):
             s.connect(dest)
             for path in path_list:
                 send_file(s, path)
-            s.send(b"END")
+            s.send(b"END") #the signal for client to close
             print("Files are sent.")
     except Exception as e:
         print(e)
     end = time.time()
-    return end - start
+    return end - start #return the total time to send 20 files
 
 def send_file(s, filePath):
     with open(filePath, "rb") as f:
-        fileName = filePath[14:]
-        fileSize = os.path.getsize(filePath)
-        s.send((fileName+"_"+str(fileSize)).encode(type))
+        fileName = filePath[14:] #get rid of the /root/objects/ part at path
+        fileSize = os.path.getsize(filePath)# get the file size
+        s.send((fileName+"_"+str(fileSize)).encode(type)) #send filename and filesize to client. filename is for opening the file, filesize is for the loop at client
         message = s.recv(10)
-        flag = False
+        flag = False #it should not be happen but for if a packet losts. we have faced with this issue but not sure weather it was our fault. therefore we added that flag part
         while True:
             try:
-                if not flag:
-                    chunk = f.read(1024)
+                if not flag: #we would not expect that but the try block failed and the code continued to except block
+                    chunk = f.read(1024) #if no retransmission
                 if not chunk:
                     break
-                s.sendall(chunk)                flag = False
+                s.sendall(chunk)    #send the chunk to the client             
+                flag = False
             except Exception as e:
                 print(e)
-                flag = True
+                flag = True #if fails than make a retransmission
                 continue
         message = s.recv(8)
 host = "172.17.0.2"
