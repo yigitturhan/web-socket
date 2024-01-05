@@ -18,7 +18,7 @@ def send_object(pathlist, host, port):
     dest, end_sent = (host, port), False
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         rtt_sum, rtt_count = 0, 0
-        while rtt_count < 10:
+        while rtt_count < 5:
             rtt = calculate_rtt(s,dest,encoded_ok,encoded_pipe)
             if rtt != 0:
                 rtt_sum += rtt
@@ -41,7 +41,7 @@ def send_object(pathlist, host, port):
             except:
                 pass
         s.settimeout(rtt)
-        for _ in range(20)
+        for _ in range(8)
             s.sendto(encoded_end_header_hash + encoded_end_header, dest)
             try:
                 message = s.recv(128) #hashli gelsin
@@ -52,7 +52,6 @@ def send_object(pathlist, host, port):
                 pass
         while index_list: #tüm paketleri göndermek için loop
             try:
-                #packets_to_send, indexes_of_packets, file_names_as_bytes, hashes, hashed_packets, i2 = [], [], [], [], [], 0
                 for x,y in index_list:
                     packets_to_send = data_list[x][y]
                     indexes_of_packets = str(y).encode(type)
@@ -74,7 +73,7 @@ def send_object(pathlist, host, port):
 
             except Exception as e:
                 print(e)
-        for _ in range(15) #tüm dosyalar gitti mi kontrol
+        for _ in range(8) #tüm dosyalar gitti mi kontrol
             s.sendto(encoded_end_hash + encoded_end, dest)
             try:
                 message = s.recv(1024) #kar�~_ıya end gönder ok b
