@@ -1,3 +1,6 @@
+#Ahmet Yiğit Turhan 2448942
+#Furkan Numanoğlu 2448710
+
 import socket
 import os
 import hashlib
@@ -78,8 +81,8 @@ def send_object(pathlist, host, port):
                 if message[:64] == encoded_ok_hash:
                     s.sendto(encoded_end_hash + encoded_end,dest)
                     break
-            except
-                pass:
+            except:
+                pass
     end = time.time()
     return end - start
 

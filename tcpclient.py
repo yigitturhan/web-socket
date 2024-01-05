@@ -1,4 +1,7 @@
-# echo-client.
+
+#Ahmet Yiğit Turhan 2448942
+#Furkan Numanoğlu 2448710
+
 import socket
 import time
 host, port,type = "", 12345, "utf-8"

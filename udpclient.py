@@ -1,8 +1,14 @@
+#Ahmet Yiğit Turhan 2448942
+#Furkan Numanoğlu 2448710
+
 import socket
 import hashlib
 import time
 dest = ("", 12345)
 type = 'utf-8'
+
+
+
 def get_objects(dest):
     start = time.time() #the starting time to measure total time to send 20 files
     encoded_ok = "OK".encode(type) #precalculation of some values in order to decrease complexity - from here to

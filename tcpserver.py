@@ -1,3 +1,6 @@
+#Ahmet Yiğit Turhan 2448942
+#Furkan Numanoğlu 2448710
+
 import socket
 import time
 import os
