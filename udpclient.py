@@ -11,17 +11,17 @@ type = 'utf-8'
 
 def get_objects(dest):
     start = time.time() #the starting time to measure total time to send 20 files
-    encoded_ok = "OK".encode(type) #precalculation of some values in order to decrease complexity - from here to
-    encoded_end_header = "END_HEADER".encode(type)
+    encoded_ok = "OK".encode() #precalculation of some values in order to decrease complexity - from here to
+    encoded_end_header = "END_HEADER".encode()
     encoded_end_header_hash = compute_sha256(encoded_end_header)
-    encoded_nack_header = "NACKHEADER".encode(type)
-    encoded_ack_header = "ACK_HEADER".encode(type)
+    encoded_nack_header = "NACKHEADER".encode()
+    encoded_ack_header = "ACK_HEADER".encode()
     encoded_ack_header_hash = compute_sha256(encoded_ack_header)
     encoded_nack_header_hash = compute_sha256(encoded_nack_header)
-    encoded_end = "END".encode(type)
+    encoded_end = "END".encode()
     encoded_end_hash = compute_sha256(encoded_end)
     encoded_ok_hash = compute_sha256(encoded_ok)
-    encoded_pipe = "|".encode(type)#here
+    encoded_pipe = "|".encode()#here
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
         s.bind(dest)#binding the port
         file_names, files = [], [] #two lists. one stores file names the other stores related data
@@ -51,7 +51,7 @@ def get_objects(dest):
                 if len(file_names) != 0:#if the data is ready but we are getting the same message because of dupplication or packet loss we ignore that
                     s.sendto(encoded_ack_header_hash+encoded_ack_header, addr)#then we send ack header to server in order to tell it we can continue to other process
                     continue
-                data = message.decode(type) #header endse tüm filelar gelmi�~_ d
+                data = message.decode() #header endse tüm filelar gelmi�~_ d
                 headers = data.split("|") #spliting the headers. please check note 3 at information about code part
                 for header in headers:
                     fileName, fileSize = header.split('_') #in each header extract filename and filesize
@@ -72,15 +72,14 @@ def get_objects(dest):
             if hash == encoded_end_hash: #if hash is end hash that means that process is done and we have received all the data
                 s.sendto(encoded_ok_hash+encoded_ok, addr)#send an ok for server to stop the program
                 break
-            try:
-                a,b,c = message[64:].decode(type).split("|") #if we cannot split the arriving data to 3 pieces this means there is an error
-            except: #the try except block is for handling that error. just ignore this packet and continue with next loop
-                continue
-            file_name, index, data = message[64:].decode(type).split("|") #extracting the filename, index and data of packet. please check note 4 for more information
-            data, index = data.encode(type), int(index) #encoding the data to write on the file and making the index integer
-            if compute_sha256(file_name.encode(type)+encoded_pipe+str(index).encode(type)+encoded_pipe+data) == hash: #if the arrived packets hash is same with the calculation this means no error occured
+            l = message[64:].decode().split("|")
+            file_name = l[0]
+            index = l[1]
+            data = "|".join(l[2:])#extracting the filename, index and data of packet. please check note 4 for more information
+            data, index = data.encode(), int(index) #encoding the data to write on the file and making the index integer
+            if compute_sha256(file_name.encode()+encoded_pipe+str(index).encode()+encoded_pipe+data) == hash: #if the arrived packets hash is same with the calculation this means no error occured
                 files[file_names.index(file_name)][index] = data #at the files list get the first index (this data belongs to which file) then the second index (at which order this should be)
-                ack_data = ("OK_"+file_name+"_"+str(index)).encode(type)
+                ack_data = ("OK_"+file_name+"_"+str(index)).encode()
                 hash_of_ack = compute_sha256(ack_data)
                 s.sendto(hash_of_ack+ack_data, addr)#send an ok message with filename and index. this will tell the server that we have received this part
         write_files(file_names, files)#when everything is finished write the files with incoming data
@@ -88,7 +87,7 @@ def get_objects(dest):
     return end - start #return the total time
 
 def compute_sha256(data):
-    return hashlib.sha256(data).hexdigest().encode(type) #please check note 5 for more information
+    return hashlib.sha256(data).hexdigest().encode() #please check note 5 for more information
 
 def ceil(num, divider): #the ceil function. it returns how much element do we need to store a file in 1024 byte length elements
     if num//divider == num/divider:

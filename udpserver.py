@@ -9,13 +9,13 @@ type = 'utf-8'
 host, port = "172.17.0.2" , 12345 # clients ip address and the port number
 def send_object(pathlist, host, port):
     start = time.time() #starting time to calculate total time to send 20 files
-    encoded_pipe = "|".encode(type)#precalculation of some values. from here to --
-    encoded_ack_header = "ACK_HEADER".encode(type)
-    encoded_end_header = "END_HEADER".encode(type)
+    encoded_pipe = "|".encode()#precalculation of some values. from here to --
+    encoded_ack_header = "ACK_HEADER".encode()
+    encoded_end_header = "END_HEADER".encode()
     encoded_end_header_hash = compute_sha256(encoded_end_header)
     encoded_ack_header_hash = compute_sha256(encoded_ack_header)
-    encoded_end = "END".encode(type)
-    encoded_ok = "OK".encode(type)
+    encoded_end = "END".encode()
+    encoded_ok = "OK".encode()
     encoded_end_hash = compute_sha256(encoded_end)
     encoded_ok_hash = compute_sha256(encoded_ok)#here
     dest = (host, port) #the destination address for packets
@@ -56,18 +56,18 @@ def send_object(pathlist, host, port):
                 for x,y in index_list: #get the indexes from index list. use that index at the beginning of the packets, please check note 7 on report
                     length += 1 #for the loop below
                     packet_to_send = data_list[x][y] #get the data from the data_list
-                    index_of_packet = str(y).encode(type) #make the index a byte-like object to send
+                    index_of_packet = str(y).encode() #make the index a byte-like object to send
                     file_name_2 = pathlist[x][14:] #get the filename whose data we are transferring
-                    file_name_as_bytes = file_name_2.encode(type) #make the file name byte-like object
-                    hash = compute_sha256((file_name_2 + "|" + str(y)).encode(type) + encoded_pipe + data_list[x][y]) #bring them all together and calculate the hash. please look at note 2 at report
+                    file_name_as_bytes = file_name_2.encode() #make the file name byte-like object
+                    hash = compute_sha256((file_name_2 + "|" + str(y)).encode() + encoded_pipe + data_list[x][y]) #bring them all together and calculate the hash. please look at note 2 at report
                     hashed_packet = hash+file_name_as_bytes+encoded_pipe+index_of_packet+encoded_pipe+packet_to_send #bring the hash and other values and create a byte-like object to send
                     s.sendto(hashed_packet, dest) #sending the packet part
                 for i in range(length): #for all the packets that are sent, try to get an ack
                     message = s.recv(1024)
                     hash = message[:64]#retrieve the hash and
-                    ok, rec_filename, rec_index = message[64:].decode(type).split("_") #retrieve the other data from arriving packet
+                    ok, rec_filename, rec_index = message[64:].decode().split("_") #retrieve the other data from arriving packet
                     rec_index = int(rec_index) #make the index integer in order to use
-                    if ok == "OK" and hash == compute_sha256(("OK_"+ rec_filename+"_"+str(rec_index)).encode(type)): #if hash and message is ok, which means no corruption at packet
+                    if ok == "OK" and hash == compute_sha256(("OK_"+ rec_filename+"_"+str(rec_index)).encode()): #if hash and message is ok, which means no corruption at packet
                         try:
                             index_list.remove((get_index_of_file(pathlist,rec_filename),rec_index))#get the index and delete this index from index_list. this means the data on that index is sent and no need to retransmission
                         except:#(for comment above) if there are some indexes at the list still, which means not ACKed, continue the loop (line 50)
@@ -89,7 +89,7 @@ def send_object(pathlist, host, port):
 def create_header(path):
     filename = path[14:] #remove the /root/objects/ part from the path
     bytecount = os.path.getsize(path) #get the bytecount
-    return (filename + "_" + str(bytecount)).encode(type) #concatenate them with - in between then encode to send
+    return (filename + "_" + str(bytecount)).encode() #concatenate them with - in between then encode to send
 
 def get_index_of_file(pathlist, file_name): #a function that gets pathlist and file name than returns the index
     for path in pathlist:
@@ -122,7 +122,7 @@ def read_data(pathlist): #just a function to read data of the files. it return a
     return data
 
 def compute_sha256(data): #computing hash. 
-    return hashlib.sha256(data).hexdigest().encode(type)
+    return hashlib.sha256(data).hexdigest().encode()
 
 
 def get_index_list(data_list): #making the index list. the result will be in form [(0,0),(0,1).....]
